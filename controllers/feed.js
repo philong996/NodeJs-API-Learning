@@ -22,19 +22,25 @@ exports.createPost = (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const errors = new Error("Validation fails. User input is incorrect!");
-    errors.statusCode = 422;
-
-    throw errors;
+    const error = new Error("Validation fails. User input is incorrect!");
+    error.statusCode = 422;
+    throw error;
+  }
+  if (!req.file) {
+    const error = new Error("No image is provided");
+    error.statusCode = 422;
+    throw error;
   }
 
   const title = req.body.title;
   const content = req.body.title;
+  const imageUrl = req.file.path.replace("\\", "/");
+  console.log(req.file);
 
   const post = new Post({
     title: title,
     content: content,
-    imageUrl: "images/tree.jpg",
+    imageUrl: imageUrl,
     creator: { name: "Long" },
   });
   post
@@ -66,6 +72,42 @@ exports.getPost = (req, res, next) => {
       }
 
       res.status(200).json({ message: "A post is fetched", post: post });
+    })
+    .catch((err) => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+exports.updatePost = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isempty()) {
+    const error = new Error("Validation fails. User input is incorrect!");
+    error.statusCode = 422;
+    throw error;
+  }
+
+  const postId = req.params.postId;
+  const title = req.body.title;
+  const content = req.body.title;
+  let imageUrl = req.body.image;
+
+  if (req.file) {
+    imageUrl = req.file.path.replace("\\", "/");
+  }
+
+  Product.findById(productId)
+    .then((product) => {
+      if (product) {
+        const error = new Error("This product is not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+
     })
     .catch((err) => {
       if (!err.statusCode) {
