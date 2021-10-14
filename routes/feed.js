@@ -9,9 +9,13 @@ const router = express.Router();
 router.get("/posts", feedController.getPosts);
 
 // POST feed.posts
-router.post("/posts", [
-    body("title").trim().isLength(5),
-    body("content").trim().isLength(5),
-], feedController.createPost);
+router.post(
+  "/posts",
+  [body("title").trim().isLength(5), body("content").trim().isLength(5)],
+  feedController.createPost
+);
+
+// GET feed/posts/:postId -> specific post
+router.get("/posts/:postId", feedController.getPost);
 
 module.exports = router;

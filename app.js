@@ -9,6 +9,8 @@ const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
 
+const multer = require("multer");
+
 const app = express();
 
 app.use(express.json());
@@ -27,12 +29,12 @@ app.use((req, res, next) => {
 app.use("/feed", feedRoutes);
 
 app.use((error, req, res, next) => {
-    const statusCode = error.statusCode || 500;
-    const message = error.message;
-    
-    res.status(statusCode).json({
-        message: message
-      })
+  const statusCode = error.statusCode || 500;
+  const message = error.message;
+
+  res.status(statusCode).json({
+    message: message,
+  });
 });
 
 mongoose
