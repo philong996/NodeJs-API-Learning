@@ -10,7 +10,7 @@ router.get("/posts", feedController.getPosts);
 
 // POST feed.posts
 router.post(
-  "/posts",
+  "/post",
   [body("title").trim().isLength(5), body("content").trim().isLength(5)],
   feedController.createPost
 );
@@ -20,7 +20,7 @@ router.get("/posts/:postId", feedController.getPost);
 
 // PUT feed/posts/:postId -> specific updated post
 router.put(
-  "post/:postId",
+  "/post/:postId",
   [body("title").trim().isLength(5), body("content").trim().isLength(5)],
   feedController.updatePost
 );

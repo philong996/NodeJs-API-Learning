@@ -35,7 +35,9 @@ const app = express();
 
 app.use(express.json());
 app.use("/images", express.static(path.join(__dirname, "images")));
-app.use(multer({ storage: fileStorage, fileFilter: imageFilter }).single("image"));
+app.use(
+  multer({ storage: fileStorage, fileFilter: imageFilter }).single("image")
+);
 
 app.use((req, res, next) => {
   res.setHeader("ACCESS-CONTROL-ALLOW-ORIGIN", "*");
@@ -61,6 +63,7 @@ app.use((error, req, res, next) => {
 mongoose
   .connect(MONGO_CONNECT_URL)
   .then((result) => {
+    console.log("CONNECTED TO MONGODB");
     app.listen(8080);
   })
   .catch((err) => {
