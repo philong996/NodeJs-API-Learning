@@ -4,6 +4,7 @@ const MONGO_CONNECT_URL = process.env.MONGO_CONNECT_URL;
 
 const feedRoutes = require("./routes/feed");
 const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/user");
 
 const path = require("path");
 
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
 
 app.use("/feed", feedRoutes);
 app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
 
 app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;
