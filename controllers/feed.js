@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const Post = require("../models/post");
+const User = require("../models/user");
 
 const { validationResult } = require("express-validator");
 
@@ -58,22 +59,31 @@ exports.createPost = (req, res, next) => {
   }
 
   const title = req.body.title;
-  const content = req.body.title;
+  const content = req.body.content;
   const imageUrl = req.file.path.replace("\\", "/");
 
   const post = new Post({
     title: title,
     content: content,
     imageUrl: imageUrl,
-    creator: { name: "Long" },
+    creator: req.userId,
   });
+
   post
     .save()
+    .then((result) => {
+      return User.findById(req.userId);
+    })
+    .then((user) => {
+      user.posts.push(post);
+      return user.save();
+    })
     .then((result) => {
       console.log("Created Post");
       res.status(201).json({
         message: "A Post created successfully!",
-        post: result,
+        post: post,
+        creator: { _id: result._id, name: result.name },
       });
     })
     .catch((err) => {
@@ -130,6 +140,12 @@ exports.updatePost = (req, res, next) => {
         error.statusCode = 404;
         throw error;
       }
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("User is not authorized to do this action");
+        error.statusCode = 403;
+        throw error;
+      }
+
       if (imageUrl !== post.imageUrl) {
         clearImage(post.imageUrl);
       }
@@ -157,6 +173,7 @@ exports.updatePost = (req, res, next) => {
 
 exports.deletePost = (req, res, next) => {
   const postId = req.params.postId;
+  let deletedPost;
 
   Post.findById(postId)
     .then((post) => {
@@ -167,9 +184,24 @@ exports.deletePost = (req, res, next) => {
       }
 
       // check the user
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("User is not authorized to do this action");
+        error.statusCode = 403;
+        throw error;
+      }
 
+      deletedPost = post;
       clearImage(post.imageUrl);
       return Post.findByIdAndRemove(post._id);
+    })
+    .then((result) => {
+      return User.findById(req.userId);
+    })
+    .then((user) => {
+      user.posts = user.posts.filter(
+        (p) => p.toString() !== deletedPost._id.toString()
+      );
+      return user.save();
     })
     .then((result) => {
       console.log("Deleted Post");
