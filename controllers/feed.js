@@ -4,6 +4,8 @@ const path = require("path");
 const Post = require("../models/post");
 const User = require("../models/user");
 
+const io = require("../socket");
+
 const { validationResult } = require("express-validator");
 
 const clearImage = (imagePath) => {
@@ -23,6 +25,8 @@ exports.getPosts = async (req, res, next) => {
   try {
     totalPosts = await Post.find().countDocuments();
     posts = await Post.find()
+      .populate("creator")
+      .sort({ createdAt: -1 })
       .skip((currentPage - 1) * limitPerPage)
       .limit(limitPerPage);
 
@@ -73,6 +77,11 @@ exports.createPost = async (req, res, next) => {
     const result = await user.save();
 
     console.log("Created Post");
+    console.log(post);
+    io.getIO().emit("posts", {
+      action: "create",
+      post: { ...post._doc, creator: { _id: result._id, name: result.name } },
+    });
     res.status(201).json({
       message: "A Post created successfully!",
       post: post,
@@ -123,13 +132,14 @@ exports.updatePost = async (req, res, next) => {
   }
 
   try {
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate("creator");
     if (!post) {
       const error = new Error("This post is not found");
       error.statusCode = 404;
       throw error;
     }
-    if (post.creator.toString() !== req.userId) {
+    console.log(post.creator.toString());
+    if (post.creator._id.toString() !== req.userId) {
       const error = new Error("User is not authorized to do this action");
       error.statusCode = 403;
       throw error;
@@ -145,6 +155,7 @@ exports.updatePost = async (req, res, next) => {
     const result = await post.save();
 
     console.log("Updated Post");
+    io.getIO().emit("posts", { action: "update", post: result });
     res.status(200).json({
       message: "Post is updated",
       post: result,
@@ -187,6 +198,7 @@ exports.deletePost = async (req, res, next) => {
     await user.save();
 
     console.log("Deleted Post");
+    io.getIO().emit("posts", { action: "delete", post: postId });
     res.status(200).json({
       message: "Deleted the post",
     });
@@ -196,5 +208,4 @@ exports.deletePost = async (req, res, next) => {
     }
     next(err);
   }
-
 };
